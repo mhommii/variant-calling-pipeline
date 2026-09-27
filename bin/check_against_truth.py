@@ -7,12 +7,16 @@ check. It reports:
   recall     - how many planted variants were found
   precision  - how many calls correspond to a planted variant
 
-Perfect scores are not expected. Simulated sequencing errors at 30x coverage
-produce a few spurious calls, and variants landing in the repeated stretches
-of the reference can be missed because reads there align ambiguously. The
-point is to see the numbers and be able to explain them.
+A perfect score is possible on the bundled data (seed 42 gets one) and shows
+the steps are wired correctly, not that the calling is good: at 30x with a
+0.1% error rate the test is easy. Lowering COVERAGE or raising ERROR_RATE in
+make_test_data.py makes it harder. The point is to see the numbers and be
+able to explain them.
 
-Run:  python bin/check_against_truth.py
+Run:  python bin/check_against_truth.py [results_dir]
+
+results_dir defaults to ./results in the repository, matching the pipeline's
+default --outdir when it is launched from the repository root.
 """
 
 import gzip
@@ -21,11 +25,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 truth_path = ROOT / "data" / "truth.vcf"
-called_dir = ROOT / "results" / "variants"
+results_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "results"
+called_dir = results_dir / "variants"
 
 
 def read_vcf(path: Path) -> set:
-    """Position, reference and alternate allele for each SNV in a VCF."""
+    """Chromosome, position, reference and alternate allele for each SNV."""
     opener = gzip.open if path.suffix == ".gz" else open
     variants = set()
     with opener(path, "rt") as handle:
@@ -33,10 +38,11 @@ def read_vcf(path: Path) -> set:
             if line.startswith("#"):
                 continue
             fields = line.split("\t")
-            position, reference, alternate = fields[1], fields[3], fields[4]
+            chrom, position = fields[0], int(fields[1])
+            reference, alternate = fields[3], fields[4]
             # Single-nucleotide changes only; indels are out of scope here.
             if len(reference) == 1 and len(alternate) == 1:
-                variants.add((int(position), reference, alternate))
+                variants.add((chrom, position, reference, alternate))
     return variants
 
 
@@ -45,8 +51,7 @@ if not truth_path.exists():
 
 called_files = sorted(called_dir.glob("*.vcf.gz")) if called_dir.exists() else []
 if not called_files:
-    sys.exit(f"No VCF found in {called_dir.relative_to(ROOT)} - "
-             f"run the pipeline first.")
+    sys.exit(f"No VCF found in {called_dir} - run the pipeline first.")
 
 truth = read_vcf(truth_path)
 
@@ -72,7 +77,7 @@ for vcf_path in called_files:
     if missed:
         shown = sorted(missed)[:5]
         print(f"  missed positions : "
-              f"{', '.join(str(p) for p, _, _ in shown)}"
+              f"{', '.join(f'{c}:{p}' for c, p, _, _ in shown)}"
               f"{' ...' if len(missed) > 5 else ''}")
 
     # A pipeline this simple should still find most planted variants. If it

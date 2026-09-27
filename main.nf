@@ -19,8 +19,6 @@
  * filtering. nf-core/sarek is the production-grade version of this idea.
  */
 
-nextflow.enable.dsl = 2
-
 params.reads     = "$projectDir/data/reads/*_{1,2}.fastq.gz"
 params.reference = "$projectDir/data/reference.fasta"
 params.outdir    = "results"
@@ -43,7 +41,7 @@ process FASTQC {
 }
 
 process BWA_INDEX {
-    container 'quay.io/biocontainers/bwa:0.7.18--he4a0461_1'
+    container 'quay.io/biocontainers/bwa:0.7.19--h577a1d6_1'
 
     input:
     path reference
@@ -59,7 +57,9 @@ process BWA_INDEX {
 
 process BWA_MEM {
     tag "$sample_id"
-    container 'quay.io/biocontainers/mulled-v2-fe8faa35dbf6dc65a0f7f5d4ea12e31a79f73e40:8110a70be2bfe7f75a2ea7f2a89cda4cc7732095-0'
+    // Combined bwa 0.7.19 + samtools 1.21 image, so alignment uses the same
+    // bwa as BWA_INDEX and the same samtools as SAMTOOLS_STATS.
+    container 'quay.io/biocontainers/mulled-v2-fe8faa35dbf6dc65a0f7f5d4ea12e31a79f73e40:bd996097b6dd518cf788ddd6c586fb23d039cb9c-0'
     publishDir "${params.outdir}/alignment", mode: 'copy'
 
     input:
@@ -143,7 +143,7 @@ process MULTIQC {
 }
 
 workflow {
-    reads = Channel.fromFilePairs(params.reads, checkIfExists: true)
+    reads = channel.fromFilePairs(params.reads, checkIfExists: true)
     reference = file(params.reference, checkIfExists: true)
 
     FASTQC(reads)

@@ -1,0 +1,7 @@
+# Keep Unix line endings in the working copy on every OS. The pipeline runs
+# under Linux (WSL or Docker), where CRLF breaks shell commands in main.nf
+# and leaves stray carriage returns in FASTA and VCF files.
+* text=auto eol=lf
+
+*.gz  binary
+*.png binary

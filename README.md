@@ -6,7 +6,7 @@
 
 ![Nextflow](https://img.shields.io/badge/Nextflow-DSL2-0DC09D?style=flat-square&logo=nextflow&logoColor=white)
 ![Docker](https://img.shields.io/badge/containers-6%20pinned-2496ED?style=flat-square&logo=docker&logoColor=white)
-![BWA](https://img.shields.io/badge/BWA-0.7.18-2C5F8D?style=flat-square)
+![BWA](https://img.shields.io/badge/BWA-0.7.19-2C5F8D?style=flat-square)
 ![bcftools](https://img.shields.io/badge/bcftools-1.21-2C5F8D?style=flat-square)
 ![Test data](https://img.shields.io/badge/test%20set-25%20planted%20variants-7FC4DC?style=flat-square)
 ![Status](https://img.shields.io/badge/test%20run-25%2F25%20found%2C%200%20false%20calls-6FD9A0?style=flat-square)
@@ -55,8 +55,8 @@ Every process declares its own pinned container, so versions do not depend on wh
 | Stage | Tool | Container |
 |---|---|---|
 | Read QC | FastQC 0.12.1 | `biocontainers/fastqc` |
-| Index reference | BWA 0.7.18 | `biocontainers/bwa` |
-| Align + sort | BWA-MEM, samtools | biocontainers mulled image |
+| Index reference | BWA 0.7.19 | `biocontainers/bwa` |
+| Align + sort | BWA-MEM 0.7.19, samtools 1.21 | biocontainers mulled image |
 | Alignment stats | samtools 1.21 | `biocontainers/samtools` |
 | Variant calling | bcftools 1.21 | `biocontainers/bcftools` |
 | Aggregate QC | MultiQC 1.25.1 | `biocontainers/multiqc` |
@@ -94,7 +94,7 @@ flowchart LR
 <td width="25%" align="center"><h3>20 kb</h3>synthetic reference</td>
 <td width="25%" align="center"><h3>25</h3>planted SNVs</td>
 <td width="25%" align="center"><h3>30×</h3>simulated coverage</td>
-<td width="25%" align="center"><h3>135 KB</h3>committed, seed-fixed</td>
+<td width="25%" align="center"><h3>134 KB</h3>committed, seed-fixed</td>
 </tr>
 </table>
 
@@ -116,7 +116,7 @@ On this seed neither happened (see [Results](#results)). Being able to explain t
 
 They do not tell you the true variant set. Without that, "the pipeline produced 41 calls" is unfalsifiable — you cannot tell a working pipeline from one that is systematically wrong.
 
-Generating the data costs a little realism and buys a real correctness check. The seed is fixed (`SEED = 42`), so regenerating produces byte-identical files, and the whole set is small enough to commit.
+Generating the data costs a little realism and buys a real correctness check. The seed is fixed (`SEED = 42`), so regenerating produces byte-identical files on any OS (checked on Windows and Linux), and the whole set is small enough to commit.
 
 The trade-off is stated in the limitations: simulated reads are cleaner and more uniform than real data, so this checks correctness, not robustness.
 
@@ -141,8 +141,8 @@ sample1.vcf.gz
 <tr>
 <td width="25%" align="center"><h3>25 / 25</h3>planted SNVs found</td>
 <td width="25%" align="center"><h3>0</h3>false calls</td>
-<td width="25%" align="center"><h3>18.9 s</h3>wall time, images cached</td>
-<td width="25%" align="center"><h3>202 MB</h3>peak memory, any step</td>
+<td width="25%" align="center"><h3>20.5 s</h3>wall time, images cached</td>
+<td width="25%" align="center"><h3>222 MB</h3>peak memory, any step</td>
 </tr>
 </table>
 
@@ -157,16 +157,16 @@ From `results/pipeline_info/trace.txt`:
 
 | Step | Duration | Peak memory |
 |---|---|---|
-| FASTQC | 4.3 s | 201.5 MB |
-| BWA_INDEX | 1.3 s | 3.1 MB |
-| BWA_MEM | 2.2 s | 10.7 MB |
-| SAMTOOLS_STATS | 954 ms | 3.2 MB |
-| BCFTOOLS_CALL | 1.2 s | 34.1 MB |
-| MULTIQC | 5.8 s | 125.7 MB |
+| FASTQC | 6.3 s | 221.5 MB |
+| BWA_INDEX | 1.6 s | 5.6 MB |
+| BWA_MEM | 1.1 s | 11.5 MB |
+| SAMTOOLS_STATS | 1.2 s | 3.2 MB |
+| BCFTOOLS_CALL | 1.7 s | 30.6 MB |
+| MULTIQC | 5.4 s | 129.1 MB |
 
 Nothing came close to the 2 GB per-process limit. On data this small, most of the time goes on starting containers.
 
-**Environment:** Ubuntu 26.04.1 under WSL 2 (capped at 3 GB RAM, 2 CPUs), Nextflow 26.04.6, Docker 29.1.3, OpenJDK 21. The first run also downloads the six container images, which takes a few minutes depending on the connection.
+**Environment:** Ubuntu 26.04.1 under WSL 2 (capped at 3 GB RAM, 2 CPUs), Nextflow 26.04.6, Docker 29.1.3, OpenJDK 21. The same run also completes on Nextflow 23.10.0. The first run downloads the six container images, which takes a few minutes depending on the connection.
 
 **Fixes the first run needed.** The code had never been executed before, and it failed three times before the analysis could finish:
 
@@ -176,27 +176,27 @@ Nothing came close to the 2 GB per-process limit. On data this small, most of th
 
 Separately, the alignment step's memory request dropped from 3 GB to 2 GB. Inside a 3 GB WSL VM, a 3 GB request can never be scheduled.
 
+**Found in a later review.** The committed FASTQ files had Windows line endings inside the gzip, because the generator ran on Windows; bwa tolerated them, but they were not valid FASTQ. The generator now writes Unix line endings and a fixed gzip timestamp, and the data was regenerated with identical sequences. The alignment image also turned out to hold older tools (bwa 0.7.17, samtools 1.15.1) than the other steps; it now uses bwa 0.7.19 and samtools 1.21 to match. The results above are from the run after both fixes.
+
 </details>
 
 ---
 
 ## Running it
 
-Requires WSL (or Linux/macOS) with Docker and Java 17+. Tested with Nextflow 26.04.6; see [Results](#results) for the full environment.
+Requires WSL (or Linux/macOS) with Docker, Java 17+ and Nextflow 23.10 or later. See [Results](#results) for the environment it was tested in.
 
 ```bash
-# one-time setup inside WSL
-sudo apt update && sudo apt install -y openjdk-17-jre-headless
+# one-time setup inside WSL (Ubuntu); Docker Engine is lighter than
+# Docker Desktop on a small machine
+sudo apt update && sudo apt install -y openjdk-21-jre-headless docker.io
+sudo usermod -aG docker $USER      # then open a new shell
 curl -s https://get.nextflow.io | bash && sudo mv nextflow /usr/local/bin/
-
-# Docker Engine inside WSL is lighter than Docker Desktop on a small machine
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER      # then restart the shell
 ```
 
 ```bash
-# generate the test data and run
-python3 bin/make_test_data.py
+# run on the committed test data (regenerating it is optional and gives
+# identical files: python3 bin/make_test_data.py)
 nextflow run main.nf -profile test,docker
 
 # check the calls against the planted variants
@@ -241,7 +241,7 @@ process {
 
 Most published pipelines assume a server. If a process requests more memory than the machine has, Nextflow fails before running anything at all — a confusing first experience.
 
-These defaults are tuned for the 5.9 GB laptop this was written on: 2 CPUs and 2 GB per process, inside a WSL VM capped at 3 GB. The retry rule covers the exit codes Nextflow uses for out-of-memory and similar transient failures, then gives up rather than looping.
+These defaults are tuned for the 5.9 GB laptop this was written on: 2 CPUs and 2 GB per process, inside a WSL VM capped at 3 GB. The retry rule re-runs a killed or crashed task once, then gives up rather than looping. The retry uses the same resources, so it helps with transient failures; a real out-of-memory would fail again.
 
 </details>
 

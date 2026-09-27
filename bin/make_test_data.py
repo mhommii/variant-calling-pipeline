@@ -17,6 +17,7 @@ Run:  python bin/make_test_data.py
 """
 
 import gzip
+import io
 import random
 from pathlib import Path
 
@@ -39,6 +40,25 @@ READS.mkdir(exist_ok=True)
 BASES = "ACGT"
 
 
+def open_text(path: Path):
+    """Text file with Unix line endings, whatever the OS.
+
+    On Windows, Python's text mode writes CRLF, which makes the files differ
+    by platform and leaves stray carriage returns in the FASTQ.
+    """
+    return path.open("w", newline="\n")
+
+
+def open_gzip_text(path: Path):
+    """Gzipped text with Unix line endings and a fixed header timestamp.
+
+    gzip records the time of writing in its header, so without mtime=0 every
+    regeneration gives different bytes even when the content is identical.
+    """
+    raw = gzip.GzipFile(filename=path, mode="wb", mtime=0)
+    return io.TextIOWrapper(raw, newline="\n")
+
+
 def reverse_complement(sequence: str) -> str:
     return sequence.translate(str.maketrans("ACGT", "TGCA"))[::-1]
 
@@ -55,7 +75,7 @@ while len(reference) < REFERENCE_LENGTH:
         reference.append(random.choice(BASES))
 reference = "".join(reference)[:REFERENCE_LENGTH]
 
-with (DATA / "reference.fasta").open("w") as handle:
+with open_text(DATA / "reference.fasta") as handle:
     handle.write(">testchr synthetic test chromosome\n")
     for position in range(0, len(reference), 60):
         handle.write(reference[position:position + 60] + "\n")
@@ -74,9 +94,9 @@ for position in positions:
     truth.append((position + 1, original, replacement))
 sample = "".join(sample)
 
-with (DATA / "truth.vcf").open("w") as handle:
+with open_text(DATA / "truth.vcf") as handle:
     handle.write("##fileformat=VCFv4.2\n")
-    handle.write(f"##reference=reference.fasta\n")
+    handle.write("##reference=reference.fasta\n")
     handle.write(f"##contig=<ID=testchr,length={REFERENCE_LENGTH}>\n")
     handle.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
     for position, original, replacement in truth:
@@ -102,8 +122,8 @@ quality = "".join(
     for index in range(READ_LENGTH)
 )
 
-with gzip.open(READS / "sample1_1.fastq.gz", "wt") as forward, \
-     gzip.open(READS / "sample1_2.fastq.gz", "wt") as reverse:
+with open_gzip_text(READS / "sample1_1.fastq.gz") as forward, \
+     open_gzip_text(READS / "sample1_2.fastq.gz") as reverse:
     for read_number in range(read_pairs):
         start = random.randint(0, len(sample) - FRAGMENT_LENGTH)
         fragment = sample[start:start + FRAGMENT_LENGTH]
