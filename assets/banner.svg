@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="t d" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace">
+  <title id="t">Variant Calling Pipeline — Nextflow DSL2, FASTQ to VCF</title>
+  <desc id="d">Banner showing the pipeline stages from FASTQ through quality control, alignment and variant calling to a VCF and MultiQC report, each stage in its own container.</desc>
+
+  <style>
+    .ttl{fill:#E6EDF3}.sub{fill:#9AA7B4}.dim{fill:#6B7885}
+    .cy{fill:#7FC4DC}.gr{fill:#6FD9A0}.am{fill:#D8B366}
+    .ln{stroke:#FFFFFF;stroke-opacity:.08}
+    .node{fill:#7FC4DC;fill-opacity:.07;stroke:#7FC4DC;stroke-opacity:.32}
+    .flow{stroke:#7FC4DC;stroke-opacity:.35;stroke-width:1.4}
+    .pulse{animation:p 3s ease-in-out infinite}@keyframes p{50%{opacity:.4}}
+    .dash{stroke-dasharray:4 6;animation:d 2.4s linear infinite}
+    @keyframes d{to{stroke-dashoffset:-20}}
+    @media (prefers-reduced-motion:reduce){.pulse,.dash{animation:none}}
+  </style>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A0E13"/><stop offset="1" stop-color="#101820"/>
+    </linearGradient>
+    <linearGradient id="hd" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#131B24"/><stop offset="1" stop-color="#0E141B"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".05"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".015"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="330" rx="16" fill="url(#bg)"/>
+  <path d="M16 .5H1184A15.5 15.5 0 0 1 1199.5 16V44H.5V16A15.5 15.5 0 0 1 16 .5Z" fill="url(#hd)"/>
+  <line x1="1" y1="44.5" x2="1199" y2="44.5" stroke="#1E2935"/>
+  <rect x=".5" y=".5" width="1199" height="329" rx="15.5" fill="none" stroke="#1E2935"/>
+
+  <circle cx="28" cy="22" r="5" fill="#D4776E" fill-opacity=".72"/>
+  <circle cx="45" cy="22" r="5" fill="#D8B366" fill-opacity=".72"/>
+  <circle cx="62" cy="22" r="5" fill="#6FBF8A" fill-opacity=".72"/>
+  <text x="88" y="26.5" font-size="12.5" class="dim">mhommii / variant-calling-pipeline</text>
+  <circle cx="930" cy="22" r="3.5" class="am pulse"/>
+  <text x="1160" y="26" text-anchor="end" font-size="11.5" class="am" letter-spacing=".06em">WRITTEN · AWAITING WSL RUN</text>
+
+  <!-- Title -->
+  <text x="40" y="96" font-size="30" font-weight="700" class="ttl">Variant Calling Pipeline</text>
+  <text x="40" y="124" font-size="14" class="sub">Reproducible Nextflow DSL2 workflow: FASTQ → VCF</text>
+  <text x="40" y="146" font-size="13" class="dim">Containerised · resumable · known-answer test set</text>
+
+  <g transform="translate(40,170)">
+    <rect x="0" y="0" width="76" height="22" rx="5" fill="#7FC4DC" fill-opacity=".08" stroke="#7FC4DC" stroke-opacity=".3"/>
+    <text x="38" y="15.5" font-size="11" text-anchor="middle" class="cy">Nextflow</text>
+    <rect x="84" y="0" width="60" height="22" rx="5" fill="#7FC4DC" fill-opacity=".08" stroke="#7FC4DC" stroke-opacity=".3"/>
+    <text x="114" y="15.5" font-size="11" text-anchor="middle" class="cy">Docker</text>
+    <rect x="152" y="0" width="44" height="22" rx="5" fill="#7FC4DC" fill-opacity=".08" stroke="#7FC4DC" stroke-opacity=".3"/>
+    <text x="174" y="15.5" font-size="11" text-anchor="middle" class="cy">BWA</text>
+    <rect x="204" y="0" width="76" height="22" rx="5" fill="#7FC4DC" fill-opacity=".08" stroke="#7FC4DC" stroke-opacity=".3"/>
+    <text x="242" y="15.5" font-size="11" text-anchor="middle" class="cy">bcftools</text>
+  </g>
+
+  <!-- Pipeline flow -->
+  <rect x="470.5" y="60.5" width="690" height="150" rx="10" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity=".1"/>
+  <text x="492" y="82" font-size="10.5" class="cy" letter-spacing=".16em">WORKFLOW · 6 PROCESSES, EACH IN ITS OWN CONTAINER</text>
+
+  <!-- input -->
+  <rect x="492" y="120" width="76" height="34" rx="6" fill="#6FD9A0" fill-opacity=".1" stroke="#6FD9A0" stroke-opacity=".45"/>
+  <text x="530" y="137" font-size="11" text-anchor="middle" class="gr">FASTQ</text>
+  <text x="530" y="149" font-size="9" text-anchor="middle" class="dim">paired</text>
+
+  <line x1="568" y1="137" x2="596" y2="137" class="flow dash"/>
+  <path d="M596 133 L604 137 L596 141 Z" fill="#7FC4DC" fill-opacity=".5"/>
+
+  <!-- QC branch -->
+  <rect x="606" y="96" width="78" height="30" rx="6" class="node"/>
+  <text x="645" y="115" font-size="10.5" text-anchor="middle" class="cy">FastQC</text>
+
+  <!-- align -->
+  <rect x="606" y="132" width="78" height="30" rx="6" class="node"/>
+  <text x="645" y="151" font-size="10.5" text-anchor="middle" class="cy">BWA-MEM</text>
+
+  <line x1="684" y1="147" x2="712" y2="147" class="flow"/>
+  <path d="M712 143 L720 147 L712 151 Z" fill="#7FC4DC" fill-opacity=".5"/>
+
+  <rect x="722" y="132" width="76" height="30" rx="6" class="node"/>
+  <text x="760" y="151" font-size="10.5" text-anchor="middle" class="cy">BAM</text>
+
+  <line x1="798" y1="147" x2="826" y2="147" class="flow"/>
+  <path d="M826 143 L834 147 L826 151 Z" fill="#7FC4DC" fill-opacity=".5"/>
+
+  <rect x="836" y="132" width="84" height="30" rx="6" class="node"/>
+  <text x="878" y="151" font-size="10.5" text-anchor="middle" class="cy">bcftools</text>
+
+  <line x1="920" y1="147" x2="948" y2="147" class="flow dash"/>
+  <path d="M948 143 L956 147 L948 151 Z" fill="#6FD9A0" fill-opacity=".7"/>
+
+  <rect x="958" y="130" width="76" height="34" rx="6" fill="#6FD9A0" fill-opacity=".1" stroke="#6FD9A0" stroke-opacity=".45"/>
+  <text x="996" y="151" font-size="11" text-anchor="middle" class="gr">VCF</text>
+
+  <!-- stats branch to MultiQC -->
+  <rect x="722" y="96" width="76" height="30" rx="6" class="node"/>
+  <text x="760" y="115" font-size="10.5" text-anchor="middle" class="cy">stats</text>
+  <line x1="684" y1="111" x2="718" y2="111" class="flow"/>
+  <line x1="798" y1="111" x2="1046" y2="111" class="flow"/>
+  <path d="M1046 107 L1054 111 L1046 115 Z" fill="#D8B366" fill-opacity=".7"/>
+  <rect x="1056" y="96" width="82" height="30" rx="6" fill="#D8B366" fill-opacity=".1" stroke="#D8B366" stroke-opacity=".45"/>
+  <text x="1097" y="115" font-size="10.5" text-anchor="middle" class="am">MultiQC</text>
+
+  <line x1="760" y1="132" x2="760" y2="126" class="flow"/>
+
+  <text x="492" y="190" font-size="11" class="dim">Test data carries 25 variants at known positions, so recall and precision can be measured.</text>
+
+  <line x1="40" y1="232.5" x2="1160" y2="232.5" class="ln"/>
+
+  <!-- Stats -->
+  <g transform="translate(40,264)">
+    <text x="0" y="0" font-size="26" font-weight="700" class="ttl">6</text>
+    <text x="0" y="22" font-size="11" class="dim">pinned containers</text>
+
+    <text x="212" y="0" font-size="26" font-weight="700" class="cy">25</text>
+    <text x="212" y="22" font-size="11" class="dim">planted test variants</text>
+
+    <text x="452" y="0" font-size="26" font-weight="700" class="ttl">20 kb</text>
+    <text x="452" y="22" font-size="11" class="dim">synthetic reference</text>
+
+    <text x="692" y="0" font-size="26" font-weight="700" class="gr">30×</text>
+    <text x="692" y="22" font-size="11" class="dim">simulated coverage</text>
+
+    <text x="932" y="0" font-size="26" font-weight="700" class="am">135 KB</text>
+    <text x="932" y="22" font-size="11" class="dim">test set, committed</text>
+  </g>
+</svg>
