@@ -172,8 +172,15 @@ results/
 process {
     cpus   = 2
     memory = '2.GB'
+    time   = '1.h'
+
     errorStrategy = { task.exitStatus in [104,134,137,139,143,247] ? 'retry' : 'terminate' }
     maxRetries    = 1
+
+    withName: BWA_MEM {
+        cpus   = 2
+        memory = '3.GB'
+    }
 }
 ```
 
