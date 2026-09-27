@@ -1,0 +1,29 @@
+##fileformat=VCFv4.2
+##reference=reference.fasta
+##contig=<ID=testchr,length=20000>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+testchr	1066	.	C	A	.	PASS	PLANTED
+testchr	2430	.	A	T	.	PASS	PLANTED
+testchr	3244	.	C	A	.	PASS	PLANTED
+testchr	3557	.	C	T	.	PASS	PLANTED
+testchr	4547	.	C	G	.	PASS	PLANTED
+testchr	4627	.	T	C	.	PASS	PLANTED
+testchr	4839	.	T	G	.	PASS	PLANTED
+testchr	4891	.	C	T	.	PASS	PLANTED
+testchr	5134	.	C	A	.	PASS	PLANTED
+testchr	5285	.	T	G	.	PASS	PLANTED
+testchr	5479	.	A	C	.	PASS	PLANTED
+testchr	5745	.	C	A	.	PASS	PLANTED
+testchr	6087	.	T	C	.	PASS	PLANTED
+testchr	8694	.	C	T	.	PASS	PLANTED
+testchr	12161	.	G	A	.	PASS	PLANTED
+testchr	12986	.	T	A	.	PASS	PLANTED
+testchr	13000	.	G	T	.	PASS	PLANTED
+testchr	13677	.	C	T	.	PASS	PLANTED
+testchr	13755	.	T	G	.	PASS	PLANTED
+testchr	14178	.	G	T	.	PASS	PLANTED
+testchr	16859	.	C	G	.	PASS	PLANTED
+testchr	16998	.	G	C	.	PASS	PLANTED
+testchr	17751	.	A	C	.	PASS	PLANTED
+testchr	18049	.	A	C	.	PASS	PLANTED
+testchr	19128	.	C	T	.	PASS	PLANTED
