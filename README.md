@@ -11,6 +11,7 @@
 ![Test data](https://img.shields.io/badge/test%20set-25%20planted%20variants-7FC4DC?style=flat-square)
 ![Status](https://img.shields.io/badge/status-written%2C%20not%20yet%20run-D8B366?style=flat-square)
 ![AI assisted](https://img.shields.io/badge/built%20with-Claude%20Code-D8B366?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-7FC4DC?style=flat-square)
 
 **A small, reproducible Nextflow pipeline: paired-end FASTQ in, VCF out.**
 
