@@ -9,7 +9,7 @@
 ![BWA](https://img.shields.io/badge/BWA-0.7.18-2C5F8D?style=flat-square)
 ![bcftools](https://img.shields.io/badge/bcftools-1.21-2C5F8D?style=flat-square)
 ![Test data](https://img.shields.io/badge/test%20set-25%20planted%20variants-7FC4DC?style=flat-square)
-![Status](https://img.shields.io/badge/status-written%2C%20not%20yet%20run-D8B366?style=flat-square)
+![Status](https://img.shields.io/badge/test%20run-25%2F25%20found%2C%200%20false%20calls-6FD9A0?style=flat-square)
 ![AI assisted](https://img.shields.io/badge/built%20with-Claude%20Code-D8B366?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-7FC4DC?style=flat-square)
 
@@ -20,12 +20,10 @@
 > [!NOTE]
 > **How this was made.** A guided learning project built with Claude Code (an AI assistant), which wrote the code and explanations. It is a learning exercise, not independent research. The *My notes* sections are mine to fill in.
 
-> [!WARNING]
-> ### Status: written and ready to run, but **not yet executed**
+> [!NOTE]
+> ### Status: run end to end on the test set (27 Sep 2026)
 >
-> Nextflow needs a POSIX environment. WSL has been installed on this machine but requires a restart before it works. The pipeline code, configuration and test data are complete; **the run and its results will be added here once WSL is active.**
->
-> I would rather say that plainly than show output I have not produced.
+> All six steps completed, and the calls matched the planted variants exactly: **25 of 25 found, 0 false calls.** That says more about how easy the test set is than about the pipeline. See [Results](#results) for the numbers and what they do and don't show.
 
 ---
 
@@ -102,12 +100,12 @@ flowchart LR
 
 Then [`bin/check_against_truth.py`](bin/check_against_truth.py) compares the pipeline's VCF against the truth set and reports **recall** and **precision**, failing if recall drops below 50%.
 
-Perfect scores are not expected, and that is the point worth understanding:
+Before the first run I expected less than perfect scores, for two reasons:
 
 - at 30× with simulated sequencing errors, a few spurious calls are normal;
 - variants landing in the reference's repeated stretches can be missed, because reads there align ambiguously.
 
-Being able to explain those numbers is more useful than a green tick.
+On this seed neither happened (see [Results](#results)). Being able to explain the numbers is more useful than a green tick, and that includes explaining a perfect score.
 
 <details>
 <summary><b>Why generate data rather than download a real test set</b></summary>
@@ -126,9 +124,65 @@ The trade-off is stated in the limitations: simulated reads are cleaner and more
 
 ---
 
+## Results
+
+Run on 27 Sep 2026 with `nextflow run main.nf -profile docker,test`. Output of `bin/check_against_truth.py`, unedited:
+
+```text
+sample1.vcf.gz
+  planted variants : 25
+  calls made       : 25
+  correctly found  : 25  (recall 100%)
+  missed           : 0
+  not planted      : 0  (precision 100%)
+```
+
+<table>
+<tr>
+<td width="25%" align="center"><h3>25 / 25</h3>planted SNVs found</td>
+<td width="25%" align="center"><h3>0</h3>false calls</td>
+<td width="25%" align="center"><h3>18.9 s</h3>wall time, images cached</td>
+<td width="25%" align="center"><h3>202 MB</h3>peak memory, any step</td>
+</tr>
+</table>
+
+**What a perfect score does and doesn't show.** It shows the steps are wired together correctly end to end: indexing, alignment, sorting and calling all run against the right reference and pass the right files along. A break anywhere in that chain would show up as missed or wrong calls. It doesn't show that the calling is good. At 30× coverage with a 0.1% simulated error rate, every planted variant is supported by roughly 30 clean reads, and a single spurious error rarely reaches that. A harder test would lower the coverage, raise the error rate, or plant variants inside the repeated stretches on purpose.
+
+<details>
+<summary><b>Per-step resources, environment, and what the first run needed</b></summary>
+
+<br>
+
+From `results/pipeline_info/trace.txt`:
+
+| Step | Duration | Peak memory |
+|---|---|---|
+| FASTQC | 4.3 s | 201.5 MB |
+| BWA_INDEX | 1.3 s | 3.1 MB |
+| BWA_MEM | 2.2 s | 10.7 MB |
+| SAMTOOLS_STATS | 954 ms | 3.2 MB |
+| BCFTOOLS_CALL | 1.2 s | 34.1 MB |
+| MULTIQC | 5.8 s | 125.7 MB |
+
+Nothing came close to the 2 GB per-process limit. On data this small, most of the time goes on starting containers.
+
+**Environment:** Ubuntu 26.04.1 under WSL 2 (capped at 3 GB RAM, 2 CPUs), Nextflow 26.04.6, Docker 29.1.3, OpenJDK 21. The first run also downloads the six container images, which takes a few minutes depending on the connection.
+
+**Fixes the first run needed.** The code had never been executed before, and it failed three times before the analysis could finish:
+
+1. *Script wouldn't compile.* Nextflow 26 rejects statements outside a `workflow` block, so the `onComplete` summary moved inside it. The summary handler also has to capture `workflow` and `params` first, because both are null by the time it runs.
+2. *MultiQC output name.* MultiQC names its data folder after the report (`multiqc_report_data`), not `multiqc_data`, so the process declared an output that never appeared.
+3. *Reruns aborted.* The timeline, report and trace files now overwrite the previous run's, so a second run doesn't stop on "file already exists".
+
+Separately, the alignment step's memory request dropped from 3 GB to 2 GB. Inside a 3 GB WSL VM, a 3 GB request can never be scheduled.
+
+</details>
+
+---
+
 ## Running it
 
-Requires WSL (or Linux/macOS) with Docker and Java 17+.
+Requires WSL (or Linux/macOS) with Docker and Java 17+. Tested with Nextflow 26.04.6; see [Results](#results) for the full environment.
 
 ```bash
 # one-time setup inside WSL
@@ -160,6 +214,7 @@ results/
 ├── stats/               samtools stats
 ├── variants/            *.vcf.gz + tabix index
 ├── multiqc_report.html  everything above, in one page
+├── multiqc_report_data/ the numbers behind the report
 └── pipeline_info/       timeline, resource trace, execution report
 ```
 
@@ -179,14 +234,14 @@ process {
 
     withName: BWA_MEM {
         cpus   = 2
-        memory = '3.GB'
+        memory = '2.GB'
     }
 }
 ```
 
 Most published pipelines assume a server. If a process requests more memory than the machine has, Nextflow fails before running anything at all — a confusing first experience.
 
-These defaults are tuned for the 5.9 GB laptop this was written on: 2 CPUs and 2–3 GB per process. The retry rule covers the exit codes Nextflow uses for out-of-memory and similar transient failures, then gives up rather than looping.
+These defaults are tuned for the 5.9 GB laptop this was written on: 2 CPUs and 2 GB per process, inside a WSL VM capped at 3 GB. The retry rule covers the exit codes Nextflow uses for out-of-memory and similar transient failures, then gives up rather than looping.
 
 </details>
 
@@ -209,7 +264,7 @@ These defaults are tuned for the 5.9 GB laptop this was written on: 2 CPUs and 2
 > [!WARNING]
 > Read these alongside anything above.
 
-- **Not yet run.** See the status note at the top.
+- **Run once, on one machine, on one easy test set.** A perfect score on 30× simulated reads doesn't predict performance on real data. See [Results](#results).
 - **Small and simplified.** bcftools calling with no base-quality recalibration, no joint genotyping, no variant filtering, and SNVs only in the comparison script. [nf-core/sarek](https://github.com/nf-core/sarek) is the production-grade version of this idea and is the right thing to use for real work.
 - **Synthetic data.** Generated reads are cleaner and more uniform than real sequencing data. Good for checking correctness, not for judging behaviour on a real sample.
 - **Resources are set for a laptop.** A real dataset needs both more resources and a larger reference than this will comfortably handle.

@@ -132,8 +132,9 @@ process MULTIQC {
     path '*'
 
     output:
+    // MultiQC names the data folder after the report: <filename>_data.
     path "multiqc_report.html"
-    path "multiqc_data"
+    path "multiqc_report_data"
 
     script:
     """
@@ -155,13 +156,19 @@ workflow {
     MULTIQC(
         FASTQC.out.reports.mix(SAMTOOLS_STATS.out.stats).collect()
     )
-}
 
-workflow.onComplete {
-    log.info """
-    Pipeline finished
-      status   : ${workflow.success ? 'OK' : 'failed'}
-      duration : ${workflow.duration}
-      results  : ${params.outdir}/
-    """.stripIndent()
+    // Registered inside the workflow block: Nextflow's strict syntax
+    // (default from 25.x) rejects top-level statements outside a workflow.
+    // `workflow` and `params` are both null inside the handler when it runs,
+    // so capture what it needs first.
+    def run    = workflow
+    def outdir = params.outdir
+    run.onComplete {
+        log.info """
+        Pipeline finished
+          status   : ${run.success ? 'OK' : 'failed'}
+          duration : ${run.duration}
+          results  : ${outdir}/
+        """.stripIndent()
+    }
 }
